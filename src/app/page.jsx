@@ -43,6 +43,9 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const apiBaseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://estv2.netlify.app/api' 
+    : 'http://localhost:3001/api';
 
   useEffect(() => {
     fetchProjects();
@@ -52,7 +55,7 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:3001/api/dashboard');
+      const response = await axios.get(`${apiBaseUrl}/dashboard`);
       setProjects(response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
