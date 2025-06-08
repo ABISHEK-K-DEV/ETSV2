@@ -60,6 +60,11 @@ export default function ProjectManagement() {
     member_ids: []
   });
 
+  // Define API URL based on environment
+  const apiBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? 'http://localhost:3001/api'
+    : 'https://estv2.netlify.app/.netlify/functions/api';
+
   useEffect(() => {
     fetchProjects();
     fetchMembers();
@@ -69,7 +74,7 @@ export default function ProjectManagement() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:3001/api/projects');
+      const response = await axios.get(`${apiBaseUrl}/projects`);
       setProjects(response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -81,7 +86,7 @@ export default function ProjectManagement() {
 
   const fetchMembers = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/members');
+      const response = await axios.get(`${apiBaseUrl}/members`);
       setMembers(response.data);
     } catch (error) {
       console.error('Error fetching members:', error);
@@ -128,13 +133,13 @@ export default function ProjectManagement() {
       setSubmitting(true);
       setError(null);
       if (editingProject) {
-        await axios.put(`http://localhost:3001/api/projects/${editingProject.id}`, {
+        await axios.put(`${apiBaseUrl}/projects/${editingProject.id}`, {
           ...formData,
           start_date: formData.start_date.format('YYYY-MM-DD'),
           expected_end_date: formData.expected_end_date.format('YYYY-MM-DD')
         });
       } else {
-        await axios.post('http://localhost:3001/api/projects', {
+        await axios.post(`${apiBaseUrl}/projects`, {
           ...formData,
           start_date: formData.start_date.format('YYYY-MM-DD'),
           expected_end_date: formData.expected_end_date.format('YYYY-MM-DD')

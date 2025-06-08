@@ -38,6 +38,11 @@ export default function TaskManagement() {
   });
   const [editingTask, setEditingTask] = useState(null);
 
+  // Define API URL based on environment
+  const apiBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? 'http://localhost:3001/api'
+    : 'https://estv2.netlify.app/.netlify/functions/api';
+
   useEffect(() => {
     fetchTasks();
     fetchProjects();
@@ -53,7 +58,7 @@ export default function TaskManagement() {
       if (filters.project_id) params.project_id = filters.project_id;
       if (filters.assignee_id) params.assignee_id = filters.assignee_id;
       
-      const response = await axios.get('http://localhost:3001/api/tasks', { params });
+      const response = await axios.get(`${apiBaseUrl}/tasks`, { params });
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -65,7 +70,7 @@ export default function TaskManagement() {
 
   const fetchProjects = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/projects');
+      const response = await axios.get(`${apiBaseUrl}/projects`);
       setProjects(response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -74,7 +79,7 @@ export default function TaskManagement() {
 
   const fetchMembers = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/members');
+      const response = await axios.get(`${apiBaseUrl}/members`);
       setMembers(response.data);
     } catch (error) {
       console.error('Error fetching members:', error);
@@ -90,7 +95,7 @@ export default function TaskManagement() {
     try {
       setSubmitting(true);
       setError(null);
-      await axios.post('http://localhost:3001/api/tasks', {
+      await axios.post(`${apiBaseUrl}/tasks`, {
         ...formData,
         assigned_date: formData.assigned_date.format('YYYY-MM-DD')
       });
@@ -112,7 +117,7 @@ export default function TaskManagement() {
 
   const updateTaskStatus = async (taskId, status) => {
     try {
-      await axios.put(`http://localhost:3001/api/tasks/${taskId}`, { status });
+      await axios.put(`${apiBaseUrl}/tasks/${taskId}`, { status });
       fetchTasks();
     } catch (error) {
       console.error('Error updating task:', error);
@@ -151,12 +156,12 @@ export default function TaskManagement() {
       setSubmitting(true);
       setError(null);
       if (editingTask) {
-        await axios.put(`http://localhost:3001/api/tasks/${editingTask.id}`, {
+        await axios.put(`${apiBaseUrl}/tasks/${editingTask.id}`, {
           ...formData,
           assigned_date: formData.assigned_date.format('YYYY-MM-DD')
         });
       } else {
-        await axios.post('http://localhost:3001/api/tasks', {
+        await axios.post(`${apiBaseUrl}/tasks`, {
           ...formData,
           assigned_date: formData.assigned_date.format('YYYY-MM-DD')
         });
@@ -179,7 +184,7 @@ export default function TaskManagement() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3001/api/tasks/${id}`);
+      await axios.delete(`${apiBaseUrl}/tasks/${id}`);
       fetchTasks();
     } catch (error) {
       console.error('Error deleting task:', error);

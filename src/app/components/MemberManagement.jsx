@@ -58,6 +58,11 @@ export default function MemberManagement() {
     status: 'Active'
   });
 
+  // Define API URL based on environment
+  const apiBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? 'http://localhost:3001/api'
+    : 'https://estv2.netlify.app/.netlify/functions/api';
+
   useEffect(() => {
     fetchMembers();
   }, []);
@@ -66,7 +71,7 @@ export default function MemberManagement() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:3001/api/members');
+      const response = await axios.get(`${apiBaseUrl}/members`);
       setMembers(response.data);
     } catch (error) {
       console.error('Error fetching members:', error);
@@ -134,9 +139,9 @@ export default function MemberManagement() {
       };
 
       if (editingMember) {
-        await axios.put(`http://localhost:3001/api/members/${editingMember.id}`, memberData);
+        await axios.put(`${apiBaseUrl}/members/${editingMember.id}`, memberData);
       } else {
-        await axios.post('http://localhost:3001/api/members', memberData);
+        await axios.post(`${apiBaseUrl}/members`, memberData);
       }
       
       handleClose();
@@ -151,7 +156,7 @@ export default function MemberManagement() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3001/api/members/${id}`);
+      await axios.delete(`${apiBaseUrl}/members/${id}`);
       setMembers(members.filter(member => member.id !== id));
     } catch (error) {
       console.error('Error deleting member:', error);

@@ -43,9 +43,11 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const apiBaseUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://estv2.netlify.app/api' 
-    : 'http://localhost:3001/api';
+  
+  // Define API URL based on environment
+  const apiBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? 'http://localhost:3001/api'
+    : 'https://estv2.netlify.app/.netlify/functions/api';
 
   useEffect(() => {
     fetchProjects();

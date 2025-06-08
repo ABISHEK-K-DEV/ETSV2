@@ -38,6 +38,11 @@ export default function LeaveTracker() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  // Define API URL based on environment
+  const apiBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? 'http://localhost:3001/api'
+    : 'https://estv2.netlify.app/.netlify/functions/api';
+
   useEffect(() => {
     fetchMembers();
   }, []);
@@ -62,13 +67,13 @@ export default function LeaveTracker() {
   const fetchLeaves = async (memberId) => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:3001/api/leaves/${memberId}`, {
+      const response = await axios.get(`${apiBaseUrl}/leaves/${memberId}`, {
         params: { year: selectedYear }
       });
       setLeaves(response.data);
     } catch (error) {
       console.error('Error fetching leaves:', error);
-      setError('Failed to fetch leave records. Please try again.');
+      setError('Failed to load leave data');
     } finally {
       setLoading(false);
     }
@@ -76,7 +81,7 @@ export default function LeaveTracker() {
 
   const calculateLeaveStats = async (memberId) => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/leaves/${memberId}`, {
+      const response = await axios.get(`${apiBaseUrl}/leaves/${memberId}`, {
         params: { year: selectedYear }
       });
       const memberLeaves = response.data;
@@ -218,7 +223,7 @@ export default function LeaveTracker() {
   // Enhance the getLeaveBalance function to include carry forward info and correctly apply it
   const getLeaveBalance = async (memberId, year) => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/leaves/${memberId}`, {
+      const response = await axios.get(`${apiBaseUrl}/leaves/${memberId}`, {
         params: { year: year }
       });
       const memberLeaves = response.data;

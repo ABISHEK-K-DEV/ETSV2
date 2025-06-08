@@ -3,31 +3,26 @@
   publish = ".next"
   functions = "netlify/functions"
 
-# For Single Page Applications
+# Environment variables
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect for API routes
+[[redirects]]
+  from = "/.netlify/functions/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# For handling client-side routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Environment variables
-[build.environment]
-  NODE_VERSION = "18"
-  
-# For Next.js API routes
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
-
-# For handling client-side routing
-[[redirects]]
-  from = "/*"
-  to = "/.next/server/pages/404.html"
-  status = 404
-
-# Stop Netlify from attempting to process our API requests
+# API headers for CORS
 [[headers]]
-  for = "/api/*"
+  for = "/.netlify/functions/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
