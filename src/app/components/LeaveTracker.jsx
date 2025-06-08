@@ -39,9 +39,12 @@ export default function LeaveTracker() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // Define API URL based on environment
-  const apiBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-    ? 'http://localhost:3001/api'
-    : 'https://estv2.netlify.app/.netlify/functions/api';
+  const isNetlify = typeof window !== 'undefined' && 
+    window.location.hostname.includes('netlify.app');
+  
+  const apiBaseUrl = isNetlify 
+    ? '/api' // Use relative path for Netlify (will be handled by our mock data approach)
+    : 'http://localhost:3001/api';
 
   useEffect(() => {
     fetchMembers();
@@ -65,16 +68,43 @@ export default function LeaveTracker() {
   };
 
   const fetchLeaves = async (memberId) => {
-    setLoading(true);
     try {
-      const response = await axios.get(`${apiBaseUrl}/leaves/${memberId}`, {
-        params: { year: selectedYear }
-      });
-      setLeaves(response.data);
+      setLoading(true);
+      
+      if (isNetlify) {
+        // Use mock data for Netlify deployment
+        setTimeout(() => {
+          setLeaves([
+            {
+              id: 1,
+              leave_date: "2023-05-10",
+              year: 2023,
+              month: 5,
+              is_lop: false,
+              status: "Valid"
+            },
+            {
+              id: 2,
+              leave_date: "2023-06-15",
+              year: 2023,
+              month: 6,
+              is_lop: false,
+              status: "Valid"
+            }
+          ]);
+          setLoading(false);
+        }, 500); // Simulate API delay
+      } else {
+        // For local development, use the real API
+        const response = await axios.get(`${apiBaseUrl}/leaves/${memberId}`, {
+          params: { year: selectedYear }
+        });
+        setLeaves(response.data);
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Error fetching leaves:', error);
       setError('Failed to load leave data');
-    } finally {
       setLoading(false);
     }
   };

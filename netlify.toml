@@ -1,18 +1,11 @@
 [build]
   command = "npm run build"
   publish = ".next"
-  functions = "netlify/functions"
 
 # Environment variables
 [build.environment]
   NODE_VERSION = "18"
-
-# Redirect for API routes
-[[redirects]]
-  from = "/.netlify/functions/api/*"
-  to = "/.netlify/functions/api/:splat"
-  status = 200
-  force = true
+  NEXT_PUBLIC_IS_NETLIFY = "true"
 
 # For handling client-side routing
 [[redirects]]
@@ -20,10 +13,14 @@
   to = "/index.html"
   status = 200
 
-# API headers for CORS
+# Fallback for API endpoints since we're using client-side mock data
+[[redirects]]
+  from = "/api/*"
+  to = "/index.html"
+  status = 200
+
+# For Next.js static assets
 [[headers]]
-  for = "/.netlify/functions/api/*"
+  for = "/_next/*"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    Cache-Control = "public, max-age=31536000, immutable"

@@ -58,10 +58,13 @@ export default function MemberManagement() {
     status: 'Active'
   });
 
-  // Define API URL based on environment
-  const apiBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-    ? 'http://localhost:3001/api'
-    : 'https://estv2.netlify.app/.netlify/functions/api';
+  // For Netlify deployment, we'll use mock data instead of trying to connect to a database
+  const isNetlify = typeof window !== 'undefined' && 
+    window.location.hostname.includes('netlify.app');
+  
+  const apiBaseUrl = isNetlify 
+    ? '/api' // Use relative path for Netlify (will be handled by our mock data approach)
+    : 'http://localhost:3001/api';
 
   useEffect(() => {
     fetchMembers();
@@ -71,12 +74,43 @@ export default function MemberManagement() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${apiBaseUrl}/members`);
-      setMembers(response.data);
+      
+      if (isNetlify) {
+        // Use mock data for Netlify deployment
+        setTimeout(() => {
+          setMembers([
+            {
+              id: 1,
+              name: "John Doe",
+              email: "john@example.com",
+              position: "Senior Developer",
+              department: "Engineering",
+              date_joined: "2020-01-15",
+              salary: 85000,
+              status: "Active"
+            },
+            {
+              id: 2,
+              name: "Jane Smith",
+              email: "jane@example.com",
+              position: "Project Manager",
+              department: "Management",
+              date_joined: "2019-08-10",
+              salary: 95000,
+              status: "Active"
+            }
+          ]);
+          setLoading(false);
+        }, 500); // Simulate API delay
+      } else {
+        // For local development, use the real API
+        const response = await axios.get(`${apiBaseUrl}/members`);
+        setMembers(response.data);
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Error fetching members:', error);
       setError('Failed to load members. Please try again.');
-    } finally {
       setLoading(false);
     }
   };

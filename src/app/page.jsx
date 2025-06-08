@@ -44,10 +44,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Define API URL based on environment
-  const apiBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-    ? 'http://localhost:3001/api'
-    : 'https://estv2.netlify.app/.netlify/functions/api';
+  // For Netlify deployment, we'll use mock data instead of trying to connect to a database
+  const isNetlify = typeof window !== 'undefined' && 
+    window.location.hostname.includes('netlify.app');
+  
+  const apiBaseUrl = isNetlify 
+    ? '/api' // Use relative path for Netlify (will be handled by our mock data approach)
+    : 'http://localhost:3001/api';
 
   useEffect(() => {
     fetchProjects();
@@ -57,12 +60,45 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${apiBaseUrl}/dashboard`);
-      setProjects(response.data);
+      
+      if (isNetlify) {
+        // Use mock data for Netlify deployment
+        setTimeout(() => {
+          setProjects([
+            {
+              id: 1,
+              name: "Demo Project 1",
+              description: "This is a demo project for Netlify deployment",
+              start_date: "2023-01-01",
+              expected_end_date: "2023-12-31",
+              budget: 50000,
+              progress: 65,
+              status: "Active",
+              team_members: "John Doe, Jane Smith"
+            },
+            {
+              id: 2,
+              name: "Demo Project 2",
+              description: "Another demo project for Netlify",
+              start_date: "2023-02-15",
+              expected_end_date: "2023-10-15",
+              budget: 75000,
+              progress: 40,
+              status: "Active",
+              team_members: "Alice Brown, Bob Johnson"
+            }
+          ]);
+          setLoading(false);
+        }, 500); // Simulate API delay
+      } else {
+        // For local development, use the real API
+        const response = await axios.get(`${apiBaseUrl}/dashboard`);
+        setProjects(response.data);
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Error fetching projects:', error);
       setError('Failed to load project data. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
