@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "server": "node server/index.js",
-    "deploy": "netlify deploy --prod"
+    "server": "node server/index.js"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
@@ -23,8 +22,7 @@
     "mysql2": "^3.6.5",
     "next": "14.0.3",
     "react": "^18",
-    "react-dom": "^18",
-    "serverless-http": "^3.2.0"
+    "react-dom": "^18"
   },
   "devDependencies": {
     "eslint": "^8",

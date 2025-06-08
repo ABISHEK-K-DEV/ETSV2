@@ -60,14 +60,6 @@ export default function ProjectManagement() {
     member_ids: []
   });
 
-  // For Netlify deployment, we'll use mock data instead of trying to connect to a database
-  const isNetlify = typeof window !== 'undefined' && 
-    window.location.hostname.includes('netlify.app');
-  
-  const apiBaseUrl = isNetlify 
-    ? '/api' // Use relative path for Netlify (will be handled by our mock data approach)
-    : 'http://localhost:3001/api';
-  
   useEffect(() => {
     fetchProjects();
     fetchMembers();
@@ -77,54 +69,19 @@ export default function ProjectManagement() {
     try {
       setLoading(true);
       setError(null);
-      
-      if (isNetlify) {
-        // Use mock data for Netlify deployment
-        setTimeout(() => {
-          setProjects([
-            {
-              id: 1,
-              name: "Demo Project 1",
-              description: "This is a demo project for Netlify deployment",
-              start_date: "2023-01-01",
-              expected_end_date: "2023-12-31",
-              budget: 50000,
-              progress: 65,
-              status: "Active",
-              team_members: "John Doe, Jane Smith",
-              member_ids: [1, 2]
-            },
-            {
-              id: 2,
-              name: "Demo Project 2",
-              description: "Another demo project for Netlify",
-              start_date: "2023-02-15",
-              expected_end_date: "2023-10-15",
-              budget: 75000,
-              progress: 40,
-              status: "Active",
-              team_members: "Alice Brown, Bob Johnson",
-              member_ids: [3, 4]
-            }
-          ]);
-          setLoading(false);
-        }, 500); // Simulate API delay
-      } else {
-        // For local development, use the real API
-        const response = await axios.get(`${apiBaseUrl}/projects`);
-        setProjects(response.data);
-        setLoading(false);
-      }
+      const response = await axios.get('http://localhost:3001/api/projects');
+      setProjects(response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
       setError('Failed to load projects. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
 
   const fetchMembers = async () => {
     try {
-      const response = await axios.get(`${apiBaseUrl}/members`);
+      const response = await axios.get('http://localhost:3001/api/members');
       setMembers(response.data);
     } catch (error) {
       console.error('Error fetching members:', error);
@@ -171,13 +128,13 @@ export default function ProjectManagement() {
       setSubmitting(true);
       setError(null);
       if (editingProject) {
-        await axios.put(`${apiBaseUrl}/projects/${editingProject.id}`, {
+        await axios.put(`http://localhost:3001/api/projects/${editingProject.id}`, {
           ...formData,
           start_date: formData.start_date.format('YYYY-MM-DD'),
           expected_end_date: formData.expected_end_date.format('YYYY-MM-DD')
         });
       } else {
-        await axios.post(`${apiBaseUrl}/projects`, {
+        await axios.post('http://localhost:3001/api/projects', {
           ...formData,
           start_date: formData.start_date.format('YYYY-MM-DD'),
           expected_end_date: formData.expected_end_date.format('YYYY-MM-DD')

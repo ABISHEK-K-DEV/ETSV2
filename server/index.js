@@ -3,17 +3,11 @@ const mysql = require('mysql2/promise');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 
-// Enhanced CORS configuration for development and production
+// Enhanced CORS configuration for development
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001', 
-    'http://127.0.0.1:3000', 
-    'http://127.0.0.1:3001', 
-    'https://estv2.netlify.app'
-  ],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']

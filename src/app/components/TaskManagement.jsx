@@ -38,14 +38,6 @@ export default function TaskManagement() {
   });
   const [editingTask, setEditingTask] = useState(null);
 
-  // For Netlify deployment, we'll use mock data instead of trying to connect to a database
-  const isNetlify = typeof window !== 'undefined' && 
-    window.location.hostname.includes('netlify.app');
-  
-  const apiBaseUrl = isNetlify 
-    ? '/api' // Use relative path for Netlify (will be handled by our mock data approach)
-    : 'http://localhost:3001/api';
-  
   useEffect(() => {
     fetchTasks();
     fetchProjects();
@@ -55,50 +47,25 @@ export default function TaskManagement() {
   const fetchTasks = async () => {
     try {
       setLoading(true);
+      setError(null);
+      const params = {};
+      if (filters.date) params.date = filters.date.format('YYYY-MM-DD');
+      if (filters.project_id) params.project_id = filters.project_id;
+      if (filters.assignee_id) params.assignee_id = filters.assignee_id;
       
-      if (isNetlify) {
-        // Use mock data for Netlify deployment
-        setTimeout(() => {
-          setTasks([
-            {
-              id: 1,
-              title: "Demo Task 1",
-              project_name: "Demo Project 1",
-              assignee_name: "John Doe",
-              assigned_date: "2023-05-01",
-              due_date: "2023-05-15",
-              status: "In Progress"
-            },
-            {
-              id: 2,
-              title: "Demo Task 2",
-              project_name: "Demo Project 2",
-              assignee_name: "Jane Smith",
-              assigned_date: "2023-05-01",
-              due_date: "2023-05-30",
-              status: "To Do"
-            }
-          ]);
-          setLoading(false);
-        }, 500); // Simulate API delay
-      } else {
-        // For local development, use the real API
-        const response = await axios.get(`${apiBaseUrl}/tasks`, {
-          params: { date: selectedDate }
-        });
-        setTasks(response.data);
-        setLoading(false);
-      }
+      const response = await axios.get('http://localhost:3001/api/tasks', { params });
+      setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      setError('Failed to load tasks');
+      setError('Failed to load tasks. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
 
   const fetchProjects = async () => {
     try {
-      const response = await axios.get(`${apiBaseUrl}/projects`);
+      const response = await axios.get('http://localhost:3001/api/projects');
       setProjects(response.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -107,7 +74,7 @@ export default function TaskManagement() {
 
   const fetchMembers = async () => {
     try {
-      const response = await axios.get(`${apiBaseUrl}/members`);
+      const response = await axios.get('http://localhost:3001/api/members');
       setMembers(response.data);
     } catch (error) {
       console.error('Error fetching members:', error);
@@ -123,7 +90,7 @@ export default function TaskManagement() {
     try {
       setSubmitting(true);
       setError(null);
-      await axios.post(`${apiBaseUrl}/tasks`, {
+      await axios.post('http://localhost:3001/api/tasks', {
         ...formData,
         assigned_date: formData.assigned_date.format('YYYY-MM-DD')
       });
@@ -145,7 +112,7 @@ export default function TaskManagement() {
 
   const updateTaskStatus = async (taskId, status) => {
     try {
-      await axios.put(`${apiBaseUrl}/tasks/${taskId}`, { status });
+      await axios.put(`http://localhost:3001/api/tasks/${taskId}`, { status });
       fetchTasks();
     } catch (error) {
       console.error('Error updating task:', error);
@@ -184,12 +151,12 @@ export default function TaskManagement() {
       setSubmitting(true);
       setError(null);
       if (editingTask) {
-        await axios.put(`${apiBaseUrl}/tasks/${editingTask.id}`, {
+        await axios.put(`http://localhost:3001/api/tasks/${editingTask.id}`, {
           ...formData,
           assigned_date: formData.assigned_date.format('YYYY-MM-DD')
         });
       } else {
-        await axios.post(`${apiBaseUrl}/tasks`, {
+        await axios.post('http://localhost:3001/api/tasks', {
           ...formData,
           assigned_date: formData.assigned_date.format('YYYY-MM-DD')
         });
@@ -212,7 +179,7 @@ export default function TaskManagement() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${apiBaseUrl}/tasks/${id}`);
+      await axios.delete(`http://localhost:3001/api/tasks/${id}`);
       fetchTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
