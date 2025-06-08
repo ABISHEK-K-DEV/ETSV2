@@ -617,11 +617,13 @@ app.get('/api/leaves/:memberId', async (req, res) => {
   try {
     const { memberId } = req.params;
     const { year } = req.query;
+    const selectedYear = year || new Date().getFullYear();
     
     const connection = await pool.getConnection();
+    // Get all leaves for the specified year
     const [leaves] = await connection.execute(
-      'SELECT * FROM leaves WHERE member_id = ? AND year = ?',
-      [memberId, year || new Date().getFullYear()]
+      'SELECT * FROM leaves WHERE member_id = ? AND year = ? ORDER BY month ASC, leave_date ASC',
+      [memberId, selectedYear]
     );
     connection.release();
     res.json(leaves);
@@ -636,7 +638,7 @@ app.post('/api/leaves', async (req, res) => {
   try {
     console.log('Received leave request:', req.body);
     
-    const { member_id, leave_date } = req.body;
+    const { member_id, leave_date, year } = req.body;
     
     if (!member_id || isNaN(member_id)) {
       return res.status(400).json({ error: 'Valid member ID is required' });
@@ -653,29 +655,33 @@ app.post('/api/leaves', async (req, res) => {
     }
     
     const date = new Date(leave_date);
-    const year = date.getFullYear();
+    const leaveYear = year || date.getFullYear();
     const month = date.getMonth() + 1;
     
     connection = await pool.getConnection();
     
-    // Check if this is LOP (more than 1 leave this month)
-    const [monthlyLeaves] = await connection.execute(
-      'SELECT COUNT(*) as count FROM leaves WHERE member_id = ? AND year = ? AND month = ?',
-      [parseInt(member_id), year, month]
+    // Get all existing leaves for this member in this year
+    const [allYearLeaves] = await connection.execute(
+      'SELECT * FROM leaves WHERE member_id = ? AND year = ? ORDER BY leave_date ASC',
+      [parseInt(member_id), leaveYear]
     );
     
-    const isLop = monthlyLeaves[0].count >= 1;
+    // Calculate if this is an LOP leave based on the yearly quota of 12 days
+    // Only count non-LOP leaves toward the quota
+    const validLeavesCount = allYearLeaves.filter(leave => !leave.is_lop).length;
+    const YEARLY_LEAVE_QUOTA = 12;
+    const isLop = validLeavesCount >= YEARLY_LEAVE_QUOTA;
     
     const [result] = await connection.execute(
       'INSERT INTO leaves (member_id, leave_date, year, month, is_lop) VALUES (?, ?, ?, ?, ?)',
-      [parseInt(member_id), leave_date, year, month, isLop]
+      [parseInt(member_id), leave_date, leaveYear, month, isLop]
     );
     
     res.status(201).json({ 
       id: result.insertId, 
       message: 'Leave recorded successfully', 
       isLop,
-      leave: { id: result.insertId, member_id, leave_date, year, month, is_lop: isLop }
+      leave: { id: result.insertId, member_id, leave_date, year: leaveYear, month, is_lop: isLop }
     });
   } catch (error) {
     console.error('Error recording leave:', error);
@@ -689,7 +695,45 @@ app.delete('/api/leaves/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const connection = await pool.getConnection();
+    
+    // Get the leave details before deleting
+    const [leaveDetails] = await connection.execute(
+      'SELECT member_id, year, month, is_lop FROM leaves WHERE id = ?',
+      [id]
+    );
+    
+    if (leaveDetails.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Leave record not found' });
+    }
+    
+    // Delete the leave
     await connection.execute('DELETE FROM leaves WHERE id = ?', [id]);
+    
+    // If this was a successful deletion, we need to recalculate LOP status for other leaves
+    if (leaveDetails[0]) {
+      const { member_id, year } = leaveDetails[0];
+      
+      // Get all remaining leaves for this member in this year
+      const [remainingLeaves] = await connection.execute(
+        'SELECT id FROM leaves WHERE member_id = ? AND year = ? ORDER BY leave_date ASC',
+        [member_id, year]
+      );
+      
+      // Update LOP status for all leaves
+      // First 12 leaves are valid, the rest are LOP
+      const YEARLY_LEAVE_QUOTA = 12;
+      
+      // Update each leave's LOP status
+      for (let i = 0; i < remainingLeaves.length; i++) {
+        const isLop = i >= YEARLY_LEAVE_QUOTA;
+        await connection.execute(
+          'UPDATE leaves SET is_lop = ? WHERE id = ?',
+          [isLop, remainingLeaves[i].id]
+        );
+      }
+    }
+    
     connection.release();
     res.json({ message: 'Leave deleted successfully' });
   } catch (error) {
